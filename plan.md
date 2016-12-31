@@ -1,0 +1,18 @@
+- git.exe proxy
+  - GitExe
+    - wraps ProcessRunner for specific git.exe
+    - provides higher-level operations - clone, checkout, etc
+  - ProcessRunner
+    - wraps process caller
+- Downloader
+  - SSH keys
+  - Embedded Gi
+t    - copy git.exe for windows
+  - settings:
+    - deploy key path
+    - fs path
+    - repo url
+    - commit
+- Parser
+- Model
+  - 
