@@ -6,8 +6,8 @@
     - wraps process caller
 - Downloader
   - SSH keys
-  - Embedded Gi
-t    - copy git.exe for windows
+  - Embedded Git
+      - copy git.exe and ssh.exe for windows
   - settings:
     - deploy key path
     - fs path

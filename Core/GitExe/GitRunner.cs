@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Text;
 using Core.ProcessRunner;
 
 namespace Core.GitExe
@@ -19,6 +20,7 @@ namespace Core.GitExe
         public bool Clone(RepositoryInfo repoInfo, int? depth = null)
         {
             var argsBuilder = new StringBuilder(repoInfo.Uri);
+            Dictionary<string, string> envVars = null;
 
             if (depth.HasValue)
             {
@@ -27,7 +29,13 @@ namespace Core.GitExe
 
             argsBuilder.Append(" " + _pathToWorkspace);
 
-            var result = _processRunner.Run(_pathToGit, argsBuilder.ToString());
+            if (repoInfo.SshDeployKeyPath != null)
+            {
+                var runner = $"ssh -i {repoInfo.SshDeployKeyPath}";
+                envVars = new Dictionary<string, string> {{"GIT_SSH_COMMAND", runner}};
+            }
+
+            var result = _processRunner.Run(_pathToGit, argsBuilder.ToString(), envVars);
             return result.ExitCode == 0;
         }
     }
@@ -35,6 +43,6 @@ namespace Core.GitExe
     public class RepositoryInfo
     {
         public string Uri { get; set; }
-        public string SshDeployKey { get; set; }
+        public string SshDeployKeyPath { get; set; }
     }
 }

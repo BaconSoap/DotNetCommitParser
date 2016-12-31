@@ -1,4 +1,5 @@
-﻿using Core.GitExe;
+﻿using System.Collections.Generic;
+using Core.GitExe;
 using Core.ProcessRunner;
 using FluentAssertions;
 using Moq;
@@ -10,6 +11,7 @@ namespace Core.Test.GitExe
     {
         private const string GitDotExe = "git.exe";
         private const string Workspace = "./testing";
+        private const string SshDeployKeyPath = "./privateKey";
 
         [Fact]
         public void Clone_with_minimal_args_works()
@@ -31,7 +33,7 @@ namespace Core.Test.GitExe
             var repositoryInfo = GetRepoInfo();
             sut.Clone(repositoryInfo);
 
-            mock.Verify(x => x.Run(GitDotExe, $"{repositoryInfo.Uri} {Workspace}"));
+            mock.Verify(x => x.Run(GitDotExe, $"{repositoryInfo.Uri} {Workspace}", null));
         }
 
         [Fact]
@@ -45,14 +47,28 @@ namespace Core.Test.GitExe
             var res = sut.Clone(repositoryInfo, depth);
 
             res.Should().BeTrue();
-            mock.Verify(x => x.Run(GitDotExe, $"{repositoryInfo.Uri} --depth={depth} {Workspace}"));
+            mock.Verify(x => x.Run(GitDotExe, $"{repositoryInfo.Uri} --depth={depth} {Workspace}", null));
+        }
+
+        [Fact]
+        public void Clone_with_SshDeployKeyPath_sets_env_variable()
+        {
+            var mock = GetMockRunner();
+            var sut = new GitRunner(mock.Object, GitDotExe, Workspace);
+
+            var repositoryInfo = GetRepoInfo();
+            repositoryInfo.SshDeployKeyPath = SshDeployKeyPath;
+            sut.Clone(repositoryInfo);
+
+            var envVars = new Dictionary<string, string> {{"GIT_SSH_COMMAND", $"ssh -i {SshDeployKeyPath}"}};
+            mock.Verify(x => x.Run(GitDotExe, $"{repositoryInfo.Uri} {Workspace}", envVars));
         }
 
         private RepositoryInfo GetRepoInfo()
         {
             return new RepositoryInfo
             {
-                SshDeployKey = null,
+                SshDeployKeyPath = null,
                 Uri = "git@github.com:BaconSoap/DotNetCommitParser.git"
             };
         }
@@ -60,7 +76,7 @@ namespace Core.Test.GitExe
         private Mock<IProcessRunner> GetMockRunner()
         {
             var mock = new Mock<IProcessRunner>();
-            mock.Setup(x => x.Run(It.IsAny<string>(), It.IsAny<string>())).Returns(() => new ProcessRunInfo {ExitCode = 0});
+            mock.Setup(x => x.Run(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Dictionary<string, string>>())).Returns(() => new ProcessRunInfo {ExitCode = 0});
             return mock;
         }
     }
